@@ -47,9 +47,9 @@ Nano33BLEMagneticData magneticData;
 Nano33BLEGyroscopeData gyroscopeData;
 Nano33BLEAccelerometerData accelerometerData;
 
-//TwoWire * _wire;
+TwoWire * _wire;
 
-//LSM9DS1Class imu(*_wire);
+LSM9DS1Class imu(*_wire);
 /*****************************************************************************/
 /*SETUP (Initialisation)                                                          */
 /*****************************************************************************/
@@ -62,7 +62,7 @@ void setup()
      * of the sensor using a Mbed OS thread. The data is placed in a 
      * circular buffer and can be read whenever.
      */
-    //imu.begin();      
+    imu.begin();      
     Magnetic.begin();
     Gyroscope.begin();
     Accelerometer.begin();
