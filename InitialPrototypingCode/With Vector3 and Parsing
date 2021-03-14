@@ -1,0 +1,61 @@
+//C#
+using UnityEngine;
+using System.Collections;
+using System.IO.Ports;
+using System;
+using System.Linq;
+
+public class Interface : MonoBehaviour
+{
+    SerialPort sp;
+
+    void Start()
+    {
+        Debug.Log("Inside");
+        sp = new SerialPort("COM5", 115200, Parity.None, 8, StopBits.One); //Replace "COM4" with whatever port your Arduino is on.
+        sp.DtrEnable = false; //Prevent the Arduino from rebooting once we connect to it. 
+                              //A 10 uF cap across RST and GND will prevent this. Remove cap when programming.
+        sp.ReadTimeout = 100; //Shortest possible read time out.
+        sp.WriteTimeout = 100; //Shortest possible write time out.
+        sp.Open();
+        if (!sp.IsOpen)
+        {
+            Debug.LogError("Serial port: " + sp.PortName + " is unavailable");
+            sp.Close(); //You can't program the Arduino while the serial port is open, so let's close it.
+        }
+    }
+
+
+    void Update()
+    {
+        if (sp.IsOpen)
+        {
+            string inData = sp.ReadLine();
+            //Debug.Log("Arduino==>" + inData);
+            sp.BaseStream.Flush();
+            sp.DiscardInBuffer();
+
+            string[] data = inData.Split(',');
+            /*
+            foreach (var item in data)
+            {
+                Debug.Log(item);
+            }
+             
+            */
+           Vector3 accel = new Vector3(float.Parse(data[0]), float.Parse(data[1]), float.Parse(data[2]));
+           Vector3 gyro = new Vector3(float.Parse(data[3]), float.Parse(data[4]), float.Parse(data[5]));
+           Vector3 magnet = new Vector3(float.Parse(data[6]), float.Parse(data[7]), float.Parse(data[8]));
+
+            /*
+           Debug.Log(accel.ToString());
+           Debug.Log(gyro.ToString());
+           Debug.Log(magnet.ToString());
+           */
+        }
+        else
+        {
+            Debug.LogError("Serial port: " + sp.PortName + " is unavailable");
+        }
+    }
+}
