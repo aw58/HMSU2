@@ -35,9 +35,12 @@ void setup() {
   Serial.print("Accelerometer sample rate = ");
   Serial.print(IMU.accelerationSampleRate());
   Serial.println(" Hz");
-  Serial.println();
-  Serial.println("Acceleration in G's");
-  Serial.println("X\tY\tZ");
+  Serial.print("Gyroscope sample rate = ");
+  Serial.print(IMU.gyroscopeSampleRate());
+  Serial.println(" Hz");
+//  Serial.print("Magnatometer sample rate = ");
+//  Serial.print(IMU.magneticFieldSampleRate());
+//  Serial.println(" Hz");
 
   Serial.println("Attempting to connect to WPA network...");
   WiFi.begin(ssid, pass);
@@ -59,34 +62,75 @@ void setup() {
 void loop() {
   client = server.available();
 
-  float x, y, z;
+  float aX, aY, aZ;
+  float gX, gY, gZ;
+  float mX, mY, mZ;
 
   if(client)
   {
     Serial.println("Client Connected");
     while(client.connected())
     {
-      //Serial.println(1);
-      //client.print(1);
-      //client.print('\r');
 
       if(IMU.accelerationAvailable())
       {
-        IMU.readAcceleration(x,y,z);
+        IMU.readAcceleration(aX, aY, aZ);
+        
+        Serial.print("Accel Data:\t");
+        Serial.print(aX);
+        Serial.print(',');
+        Serial.print(aY);
+        Serial.print(',');
+        Serial.println(aZ);
 
-        Serial.print(x);
-        Serial.print('\t');
-        Serial.print(y);
-        Serial.print('\t');
-        Serial.println(z);
-
-        client.print(x);
-        client.print('\t');
-        client.print(y);
-        client.print('\t');
-        client.print(z);   
+        client.print("Accel Data:\t");
+        client.print(aX);
+        client.print(',');
+        client.print(aY);
+        client.print(',');
+        client.print(aZ);   
         client.print('\r');    
       }
+
+     if(IMU.gyroscopeAvailable())
+      {
+        IMU.readGyroscope(gX, gY, gZ);
+
+        Serial.print("Gyro Data:\t");
+        Serial.print(gX);
+        Serial.print(',');
+        Serial.print(gY);
+        Serial.print(',');
+        Serial.println(gZ);
+
+        client.print("Gyro Data:\t");
+        client.print(gX);
+        client.print(',');
+        client.print(gY);
+        client.print(',');
+        client.print(gZ);   
+        client.print('\r');    
+      }
+      
+//    if(IMU.magneticFieldAvailable())
+//      {
+//        IMU.readMagneticField(mX, mY, mZ);
+//
+//        Serial.print("Mag Data:\t");
+//        Serial.print(mX);
+//        Serial.print('\t');
+//        Serial.print(mY);
+//        Serial.print('\t');
+//        Serial.println(mZ);
+//
+//        client.print("Mag Data:\t");
+//        client.print(mX);
+//        client.print('\t');
+//        client.print(mY);
+//        client.print('\t');
+//        client.print(mZ);   
+//        client.print('\r');    
+//      }
 
       delay(1);
     }

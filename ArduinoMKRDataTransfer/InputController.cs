@@ -16,7 +16,7 @@ public class InputController : MonoBehaviour
         // Give the network stuff its own special thread
         var thread = new Thread(() =>
         {
-
+            Debug.Log("Hello");
             // This class makes it super easy to do network stuff
             var client = new TcpClient();
 
@@ -29,7 +29,8 @@ public class InputController : MonoBehaviour
 
             StateClient = client.Connected;
 
-            while (client.Connected)
+
+            while (StateClient)
             {
                 
                 // Read the next byte
