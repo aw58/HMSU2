@@ -24,11 +24,11 @@ sh2_SensorValue_t sensorValue;
 
 // set up WiFi
 byte ledPin = 2;
-char ssid[] = "^^^^^^^^";               // ^^^^ SSID of your home WiFi
-char pass[] = "^^^^^^^^";               // ^^^^ password of your home WiFi
+char ssid[] = "Bill Wi the Science Fi";               // ^^^^ SSID of your home WiFi
+char pass[] = "dinosaurs";               // ^^^^ password of your home WiFi
 WiFiServer server(80);                    
-IPAddress ip(192, 168, 86, 251);            // ^^^^ IP address of the server -- note that this should be out of the range of my server's DCHP address pool
-IPAddress gateway(192,168,86,1);           // ^^^^ gateway of your network (IP saddress of the router)
+IPAddress ip(10,0,0,142);            // ^^^^ IP address of the server -- note that this should be out of the range of my server's DCHP address pool
+IPAddress gateway(10,0,0,1);           // ^^^^ gateway of your network (IP saddress of the router)
 IPAddress subnet(255,255,255,0);          // ^^^^ subnet mask of your network
 
 void setup() {
