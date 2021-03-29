@@ -1,53 +1,52 @@
-﻿//C#
+//C#
 using UnityEngine;
 using System.Collections;
 using System.IO.Ports;
 using System;
 using System.Linq;
-using static Data.Namespace.DataMap; //Team-created class. See Scripts Folder
-using System.IO;
+using static Data.Namespace.DataMap; //Team-created class: See Unity Scripts Folder- A mapping function for use with raw Euler Angles
+using System.IO; //for writing to a file
 
-public class Interface : MonoBehaviour
+public class Interface_with_positioning_trial : MonoBehaviour
 {
     SerialPort sp;
-    public Transform target; //The item we want to affect with our accelerometer
-    public int setInitialOrientationCount = 0;
-    public Quaternion homeOrientation;
-    public Quaternion initialOrientation;
+    public Transform target; //The object this script is attached to
+    public int setInitialOrientationCount = 0; //counter for the initial waiting period
+    public Quaternion homeOrientation; //the orientation of the target as it is originally in the game space
+    public Quaternion initialOrientation; //the orientation of the device after the initialization waiting period
     public Boolean initialized = false;
 
+    public string[] data; //where the incoming data is stored for each frame update
+
     //positioning initialization
-    public Vector3 initialPos;
-    public Vector3 prevVel = new Vector3(0f,0f,0f);
+    public Vector3 prevVel = new Vector3(0f,0f,0f); //the velocity of the previous frame
+    //initial position is set by where the object is originally placed in the game-space
 
 
     void Start()
     {
-        Debug.Log("Inside");
-        sp = new SerialPort("COM11", 115200, Parity.None, 8, StopBits.One); //Replace "COMx" with whatever port your Arduino is on.
+        sp = new SerialPort("COM11", 115200, Parity.None, 8, StopBits.One); //Replace "COMx" with whatever port your Arduino is on. See this via the Arduino IDE while the device is plugged in.
         sp.DtrEnable = true; //set this to true. False makes it timeout. false = Prevent the Arduino from rebooting once we connect to it. 
                              //A 10 uF cap across RST and GND will prevent this. Remove cap when programming.
-        sp.ReadTimeout = 20; //Shortest possible read time out.
-        sp.WriteTimeout = 20; //Shortest possible write time out.
-        sp.Open();
+        sp.ReadTimeout = 20; //Shortest possible read time out. If timeout Errors are given by Unity, either the device is not turned on properly, or this value can be increased
+        sp.WriteTimeout = 20; //Shortest possible write time out. Not used in this code since no messages are currently sent to the device
+        sp.Open(); //open Serial port communication
         if (!sp.IsOpen)
         {
             Debug.LogError("Serial port: " + sp.PortName + " is unavailable");
             sp.Close(); //You can't program the Arduino while the serial port is open, so let's close it.
         }
 
-        homeOrientation = new Quaternion(1, 0, 0, 0);
+        homeOrientation = target.transform.rotation; //the in-game starting orientaiton, as defined by where the object is originally rotated relative to the game-space
 
         // Set a variable to the Documents path.
         string docPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-
-        // Append text to an existing file named "WriteLines.txt".
+        // Either create (if it doesn't exist) or clear the contents of the file "outputData.txt" in the computer's Documents folder
         using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "outputData.txt"), false))
         {
+            //Output any start-of-document text here
         }
 
-        //initialize initialPos
-        initialPos = target.transform.position;
 
     }
 
@@ -55,7 +54,7 @@ public class Interface : MonoBehaviour
     {
         if (sp.IsOpen)
         {
-
+            //read from the COM Port
             string inData = sp.ReadLine();
             
             //Debug.Log("Arduino==>" + inData);
@@ -66,9 +65,12 @@ public class Interface : MonoBehaviour
             
             if(inData != ""){ //throw out empty data
 
+                //DATA FORMAT:
+                //"RVw,RVx,RVy,RVz,Ax,Ay,Az\n" no spaces, newline character at the end
 
 
-                string[] data = inData.Split(',');
+                //parse the data into an array of strings
+                data = inData.Split(',');
 
                 /*
                 Debug.Log("Data: ");
@@ -78,14 +80,15 @@ public class Interface : MonoBehaviour
                 }
                 Debug.Log("End Data");
                 */
+                //Debug.Log("0: " + data[0] + " 1: " + data[1] + " 2: " + data[2] + "3: " + data[3]);
 
-                 //Debug.Log("0: " + data[0] + " 1: " + data[1] + " 2: " + data[2] + "3: " + data[3]);
 
-                //initialize the beginning orientation
+                //initialize starting orientation after a waiting period
                 /*
-                if (setInitialOrientationCount > 500 && !initialized)
+                if (setInitialOrientationCount > 1000 && !initialized) //wait for 1000 frames to pass- about 1 sec
                 {
                     initialOrientation = new Quaternion(float.Parse(data[3]), -float.Parse(data[0]), -float.Parse(data[1]), -float.Parse(data[2]));
+                    
                     initialized = true;
                 }
                 else
@@ -94,38 +97,32 @@ public class Interface : MonoBehaviour
                 }
                 */
 
-                //create quat's from data. Constructor: Quaternion, x, y, z, w)
-                //parse out erroneous i data
+                //create quaternions from incoming orientation data. Constructor: Quaternion, x, y, z, w)
+                //parse out erroneous data (experimentally found)
                 if (data.Length < 7 || data[3] == "nan" ||float.Parse(data[0]) > 2)
                 {
-                    Debug.Log("Incomplete Data");
+                    //Debug.Log("Incorrect data was sent.");
                 }
-                else
+                else //data is correct and complete, continue to pass that on to the target
                 {
-
-
                     //write to a file
                     // Set a variable to the Documents path.
                     string docPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-
-                    // Append text to an existing file named "WriteLines.txt".
+                    //Append text to an existing file named "outputData.txt".
                     using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "outputData.txt"), true))
                     {
-                        outputFile.WriteLine(DateTime.Now.ToString("h:mm:ss") + ": " + inData);
+                        outputFile.WriteLine(DateTime.Now.ToString("h:mm:ss") + "- Qw: " +data[0]+ " Qx: "+data[1]+ " Qy: " +data[2]+ " Qz: "+data[3]+ "Ax: "+data[4]+ " Ay: " +data[5]+ " Az: "+data[6]);
                     }
 
-                    //transform!
-                    Quaternion newQuat = new Quaternion(float.Parse(data[0]), float.Parse(data[3]), -float.Parse(data[2]), -float.Parse(data[1])); //negatives are to align the rotation movement with the plane object
-                    target.transform.rotation = Quaternion.Normalize(newQuat); //the #f acts as a smoothing factor
-                    // target.transform.rotation = Quaternion.RotateTowards(Quaternion.Normalize(newQuat), Quaternion.Normalize(homeOrientation), 90);
-                    //spherically interpolates (thus integrating the gyro values) between the current object position and the new euler angles, then gives that to the object as its new position.
+                    //transform orientation!
+                    Quaternion newQuat = new Quaternion(float.Parse(data[0]), float.Parse(data[3]), -float.Parse(data[2]), -float.Parse(data[1])); //out-of-orderness and negatives are to align the rotation movement with the cursor object
+                    target.transform.rotation = Quaternion.Normalize(newQuat); //normalize, then update orientation
+                    // target.transform.rotation = Quaternion.RotateTowards(Quaternion.Normalize(newQuat), Quaternion.Normalize(homeOrientation), 90)
                 
-                
-                    //positioning
-                    //multiply x accel by delta time to get velocity
- 
-
+                    //transform positioning
                     target.transform.position = target.transform.position + new Vector3(prevVel.x*Time.deltaTime + ((1/2)*float.Parse(data[4])*Time.deltaTime * Time.deltaTime), prevVel.y*Time.deltaTime + ((1/2)*float.Parse(data[5])*Time.deltaTime * Time.deltaTime), prevVel.z*Time.deltaTime + ((1/2)*float.Parse(data[6])*Time.deltaTime * Time.deltaTime));
+                    
+                    //multiply accel by delta time to get velocity, then store that for the next frame to use
                     prevVel.x = float.Parse(data[4])*Time.deltaTime;
                     prevVel.y = float.Parse(data[5])*Time.deltaTime;
                     prevVel.z = float.Parse(data[6])*Time.deltaTime;
