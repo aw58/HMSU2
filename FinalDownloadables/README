@@ -6,3 +6,6 @@ These files are necessary for the operation of the HMSU2 system.
 These files are for expansion upon the current system:
 "Huzzah_wifi_send_game_and_accel.ino" - code to be uploaded to the Huzzah to send data over wifi, to be paired with...
 "InputController.cs" - Unity script for listening to a server at the Huzzah's IP address
+
+FULL UNITY APPLICATION ZIP:
+https://pitt-my.sharepoint.com/:u:/g/personal/aaw58_pitt_edu/EerNpHu7o6ZLvB9tCeGkgX0BTBuhmSAYk2-JKrGQt5WVmQ?e=sogeyq
