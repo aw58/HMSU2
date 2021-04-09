@@ -54,6 +54,7 @@ public class Interface : MonoBehaviour
         using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "outputData.txt"), false))
         {
             //Output any start-of-document text here
+            outputFile.WriteLine("All data is relative to initialized orientation and position.");
             outputFile.WriteLine("Start of Data:");
         }
 
@@ -122,20 +123,24 @@ public class Interface : MonoBehaviour
                 }
                 else //data is correct and complete, continue to pass that on to the target
                 {
+                    //create a quaternion from incoming orientation data. Constructor: Quaternion, x, y, z, w)
+                    //update the rotation to this raw value. Correcting this orientation occurs once initializedBody == True
+                    Quaternion newQuat = new Quaternion(float.Parse(data[0]), float.Parse(data[2]), float.Parse(data[0]), -float.Parse(data[1])); //out-of-orderness and negatives are to align the rotation movement with the cursor object. experimentally found
+                    target.transform.rotation = Quaternion.Normalize(newQuat); //normalize, then update orientation
+
                     if (initializedBody)
                     {
-                        /* //for debugging orientation corrections
-                       Debug.Log("before rotating: " + target.transform.rotation.eulerAngles);
-                       Debug.Log("home: " + homeOrientation + " initial: " + initialOrientation + " difference z: " + (initialOrientation.z - homeOrientation.z));
-                       target.transform.Rotate(homeOrientation.z - initialOrientation.z, homeOrientation.x - initialOrientation.x, homeOrientation.y - initialOrientation.y, Space.World); //prient the cursor to the world space after the initialization period
-                       Debug.Log("after rotating: " + target.transform.rotation.eulerAngles);
-                        */
+                       //for debugging orientation corrections
+                       // Debug.Log("before rotating: " + target.transform.rotation.eulerAngles);
+                       //Debug.Log("initial: " + initialOrientation);
 
-                        //transform orientation!
-                        //create a quaternion from incoming orientation data. Constructor: Quaternion, x, y, z, w)
-                        Quaternion newQuat = new Quaternion(float.Parse(data[0]), float.Parse(data[3]), float.Parse(data[1]), -float.Parse(data[2])); //out-of-orderness and negatives are to align the rotation movement with the cursor object. experimentally found
-                        target.transform.rotation = Quaternion.Normalize(newQuat); //normalize, then update orientation
-                        target.transform.Rotate(homeOrientation.x-initialOrientation.x, 0, homeOrientation.z-initialOrientation.z, Space.Self); //rotate to initialize about homeOrientation
+                        //transform orientation! Only two rotations about two axes are required to fully orient itself in the game space
+                        //doing these rotations together in the same line does not result in the correct rotation.
+                        target.transform.Rotate(0, 0, homeOrientation.z - initialOrientation.z, Space.Self); //rotate to initialize about homeOrientation
+                        //Debug.Log("after rotating z: " + target.transform.rotation.eulerAngles);
+                        target.transform.Rotate(0, homeOrientation.y - initialOrientation.y, 0, Space.Self); //rotate to initialize about homeOrientation
+                        //for debugging orientation corrections
+                        //Debug.Log("after rotating y: " + target.transform.rotation.eulerAngles);
 
                         //transform positioning!
                         var deltaPos = new Vector3((prevVel.x * Time.deltaTime + ((1 / 2) * float.Parse(data[4]) * Time.deltaTime * Time.deltaTime)) * 2, (prevVel.y * Time.deltaTime + ((1 / 2) * float.Parse(data[5]) * Time.deltaTime * Time.deltaTime)) * 2, (prevVel.z * Time.deltaTime + ((1 / 2) * float.Parse(data[6]) * Time.deltaTime * Time.deltaTime)) * 2);
@@ -144,24 +149,27 @@ public class Interface : MonoBehaviour
                         //Debug.Log("Position: " + target.transform.position);
 
                         //multiply accel by delta time to get velocity, then store that for the next frame to use
-                        prevVel.x = (float.Parse(data[4]) * Time.deltaTime * 10) - velBias.x; //multiplying by an integer factor is necessary to avoid truncation of such small numbers. This also increases velocity sensitivity.
-                        prevVel.y = (float.Parse(data[5]) * Time.deltaTime * 10) - velBias.y;
-                        prevVel.z = (float.Parse(data[6]) * Time.deltaTime * 10) - velBias.z;
+                        prevVel.x = (float.Parse(data[4]) * Time.deltaTime * 10);// - velBias.x; //multiplying by an integer factor is necessary to avoid truncation of such small numbers. This also increases velocity sensitivity.
+                        prevVel.y = (float.Parse(data[5]) * Time.deltaTime * 10);// - velBias.y;
+                        prevVel.z = (float.Parse(data[6]) * Time.deltaTime * 10);// - velBias.z;
 
-                        //write to a file
+                        // Write to a file
                         // Set a variable to the Documents path.
                         string docPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
                         //Append text to an existing file named "outputData.txt".
                         using (StreamWriter outputFile = new StreamWriter(Path.Combine(docPath, "outputData.txt"), true))
                         {
                             //outputFile.WriteLine(DateTime.Now.ToString("h:mm:ss") + "- Qw: " + data[0] + " Qx: " + data[1] + " Qy: " + data[2] + " Qz: " + data[3] + "Ax: " + data[4] + " Ay: " + data[5] + " Az: " + data[6]);
-                            outputFile.WriteLine(DateTime.Now.ToString("h:mm:ss") + " X_rot: " + target.transform.rotation.eulerAngles.x + " Y_rot: " + target.transform.rotation.eulerAngles.y + " Z_rot: " + target.transform.rotation.eulerAngles.z + " X_pos: " + (target.transform.position.x - initialPos.x) + " Y_pos: " + (target.transform.position.y - initialPos.y) + " Z_pos: " + (target.transform.position.z - initialPos.z));
+                            outputFile.WriteLine(DateTime.Now.ToString("h:mm:ss: ") + " X_rot: " + (target.transform.rotation.eulerAngles.x - initialOrientation.x) + " Y_rot: " + (target.transform.rotation.eulerAngles.y - initialOrientation.y) + " Z_rot: " + (target.transform.rotation.eulerAngles.z - initialOrientation.z) + " X_pos: " + (target.transform.position.x - initialPos.x) + " Y_pos: " + (target.transform.position.y - initialPos.y) + " Z_pos: " + (target.transform.position.z - initialPos.z));
+                            
+                            //Output data relative to the world-space in-game
+                            //outputFile.WriteLine(DateTime.Now.ToString("h:mm:ss: ") + " X_rot: " + target.transform.rotation.eulerAngles.x + " Y_rot: " + target.transform.rotation.eulerAngles.y + " Z_rot: " + target.transform.rotation.eulerAngles.z + " X_pos: " + target.transform.position.x + " Y_pos: " + target.transform.position.y + " Z_pos: " + target.transform.position.z);
                         }
                     }
                 }
             }
 
-            //these lines discard any data that was passed to the serial port since starting the frame. Removing these lines causes a backup of data in the buffers
+            //these lines discard any data that was passed to the serial port since starting the frame. Not including these lines causes a backup of data in the buffers and lag in the game
             sp.BaseStream.Flush();
             sp.DiscardInBuffer();
         }
