@@ -4,5 +4,5 @@ These files are necessary for the operation of the HMSU2 system.
 "Serial_Quat_and_Accel_Huzzah.ino" - code to be uploaded to the Adafruit Feather Huzzah for serial data transfer
 
 These files are for expansion upon the current system:
-"WifiServer.ino" - code to be uploaded to the Huzzah to send data over wifi, to be paired with...
+"Huzzah_wifi_send_game_and_accel.ino" - code to be uploaded to the Huzzah to send data over wifi, to be paired with...
 "InputController.cs" - Unity script for listening to a server at the Huzzah's IP address
