@@ -1,0 +1,8 @@
+These files are necessary for the operation of the HMSU2 system. 
+"Interface.cs" - the main Unity script for controlling data acquisition and use.
+"ChangeColor.cs" - a supporting scrupt which allows for interactable targets in the game space
+"Serial_Quat_and_Accel_Huzzah.ino" - code to be uploaded to the Adafruit Feather Huzzah for serial data transfer
+
+These files are for expansion upon the current system:
+"WifiServer.ino" - code to be uploaded to the Huzzah to send data over wifi, to be paired with...
+"InputController.cs" - Unity script for listening to a server at the Huzzah's IP address
