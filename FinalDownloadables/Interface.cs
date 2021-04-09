@@ -1,4 +1,4 @@
-﻿//C#
+//C#
 using UnityEngine;
 using System.Collections;
 using System.IO.Ports;
@@ -10,22 +10,23 @@ using System.Text.RegularExpressions; //data parsing with Regular Expressions
 
 public class Interface : MonoBehaviour
 {
-    public int waitToInitializeTable = 100; //time before initializing orientation and position
-    public int waitToInitializeBody = 200; //time before initializing orientation and position
+    public int waitToInitializeTable = 300; //number of frames before initializing orientation and position
+    public int waitToInitializeBody = 1000; //number of frames before initializing orientation and position
     public Transform target; //Fill this with the object this script is attached to in the Unity editor
+   
     private SerialPort sp; //for connecting to the serial port and reading data
     private string[] data; //where the incoming data is stored for each frame update
 
     //positioning initialization
     private Vector3 prevVel = new Vector3(0f, 0f, 0f); //the velocity of the previous frame
-    private Vector3 velBias;
+    private Vector3 velBias; //used to offset calculated velocities by an initial, sitting-still value
     private int initializeTableCount = 0; //counter for the table waiting period
     private int initializeBodyCount = 0; //counter for the body waiting period
     private Vector3 homeOrientation; //the orientation of the target as it is originally in the World space
     private Vector3 initialOrientation; //the orientation of the device after the Body initialization waiting period
-    private Boolean initializedTable = false;
-    private Boolean initializedBody = false;
-    private Vector3 initialPos;
+    private Boolean initializedTable = false; //used for initialization control
+    private Boolean initializedBody = false; //used for initialization control
+    private Vector3 initialPos; //used for outputting relative positions to the data file
 
 
 
@@ -65,6 +66,7 @@ public class Interface : MonoBehaviour
             //read from the COM Port
             string inData = sp.ReadLine();
 
+            //Print raw incoming strings, unfiltered
             //Debug.Log("Arduino==>" + inData);
 
             if (inData != "")
@@ -73,12 +75,10 @@ public class Interface : MonoBehaviour
                 //DATA FORMAT:
                 //"RVw,RVx,RVy,RVz,Ax,Ay,Az\n" no spaces, newline character at the end
 
-
                 //parse the data into an array of strings
                 data = inData.Split(',');
 
                 //Debug.Log(data.Length);
-
 
                 /*
                 Debug.Log("Data: ");
@@ -105,7 +105,6 @@ public class Interface : MonoBehaviour
                 {
                     initializedBody = true;
                     initialPos = target.transform.position;
-                    var tempQuat = new Quaternion(float.Parse(data[3]), float.Parse(data[0]), float.Parse(data[1]), float.Parse(data[2]));
                     initialOrientation = target.transform.localEulerAngles; //get current rotation and use that to initialize
                     Debug.Log("Body-initialized.");
                 }
@@ -157,7 +156,6 @@ public class Interface : MonoBehaviour
                         {
                             //outputFile.WriteLine(DateTime.Now.ToString("h:mm:ss") + "- Qw: " + data[0] + " Qx: " + data[1] + " Qy: " + data[2] + " Qz: " + data[3] + "Ax: " + data[4] + " Ay: " + data[5] + " Az: " + data[6]);
                             outputFile.WriteLine(DateTime.Now.ToString("h:mm:ss") + " X_rot: " + target.transform.rotation.eulerAngles.x + " Y_rot: " + target.transform.rotation.eulerAngles.y + " Z_rot: " + target.transform.rotation.eulerAngles.z + " X_pos: " + (target.transform.position.x - initialPos.x) + " Y_pos: " + (target.transform.position.y - initialPos.y) + " Z_pos: " + (target.transform.position.z - initialPos.z));
-                            //TODO: eventually move this to inside if(initialized) and give euler angles with respect to the world-space
                         }
                     }
                 }
